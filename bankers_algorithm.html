@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Banker's Algorithm Simulator</title>
+
+<style>
+
+body{
+font-family: Arial, sans-serif;
+background:#111827;
+color:white;
+text-align:center;
+padding:30px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+}
+
+.section{
+background:#1f2937;
+padding:20px;
+border-radius:8px;
+margin-bottom:20px;
+}
+
+table{
+margin:auto;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+td,th{
+border:1px solid #374151;
+padding:8px;
+}
+
+input{
+width:50px;
+padding:5px;
+text-align:center;
+background:#111827;
+color:white;
+border:1px solid #374151;
+border-radius:4px;
+}
+
+button{
+padding:8px 16px;
+margin:8px;
+border:none;
+border-radius:5px;
+background:#2563eb;
+color:white;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+.max{background:#7f1d1d;}
+.alloc{background:#1e3a8a;}
+.need{background:#065f46;}
+.available{background:#78350f;}
+
+.safe{color:#22c55e;}
+.unsafe{color:#ef4444;}
+
+.formula{
+color:#9ca3af;
+font-style:italic;
+margin-top:5px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Banker's Algorithm Simulator</h1>
+
+<div class="container">
+
+<div class="section">
+
+Processes:
+<input type="number" id="processes" value="3">
+
+<br><br>
+
+Available Resources:
+
+<input id="a0" class="available">
+<input id="a1" class="available">
+<input id="a2" class="available">
+
+<br><br>
+
+<button onclick="generateTables()">Generate Tables</button>
+
+</div>
+
+
+<div class="section">
+
+<h3>Max Matrix</h3>
+
+<table id="maxTable">
+
+<tr>
+<th>Process</th>
+<th>R1</th>
+<th>R2</th>
+<th>R3</th>
+</tr>
+
+</table>
+
+</div>
+
+
+<div class="section">
+
+<h3>Allocation Matrix</h3>
+
+<table id="allocTable">
+
+<tr>
+<th>Process</th>
+<th>R1</th>
+<th>R2</th>
+<th>R3</th>
+</tr>
+
+</table>
+
+</div>
+
+
+<div class="section">
+
+<button onclick="calculateNeed()">Need</button>
+
+<div class="formula">
+Need = Max − Allocation
+</div>
+
+<h3>Need Matrix</h3>
+
+<table id="needTable"></table>
+
+</div>
+
+
+<div class="section">
+
+<button onclick="checkSafe()">Sequence</button>
+
+<button onclick="resetAll()">Another Request</button>
+
+<h3 id="result"></h3>
+
+</div>
+
+</div>
+
+
+<script>
+
+function generateTables(){
+
+let p=document.getElementById("processes").value;
+
+let maxTable=document.getElementById("maxTable");
+let allocTable=document.getElementById("allocTable");
+
+maxTable.innerHTML="<tr><th>Process</th><th>R1</th><th>R2</th><th>R3</th></tr>";
+allocTable.innerHTML="<tr><th>Process</th><th>R1</th><th>R2</th><th>R3</th></tr>";
+
+for(let i=0;i<p;i++){
+
+let row=maxTable.insertRow();
+row.insertCell(0).innerHTML="P"+i;
+
+for(let j=0;j<3;j++){
+row.insertCell(j+1).innerHTML="<input class='max'>";
+}
+
+let row2=allocTable.insertRow();
+row2.insertCell(0).innerHTML="P"+i;
+
+for(let j=0;j<3;j++){
+row2.insertCell(j+1).innerHTML="<input class='alloc'>";
+}
+
+}
+
+}
+
+
+function calculateNeed(){
+
+let p=document.getElementById("processes").value;
+let needTable=document.getElementById("needTable");
+
+needTable.innerHTML="<tr><th>Process</th><th>R1</th><th>R2</th><th>R3</th></tr>";
+
+for(let i=0;i<p;i++){
+
+let row=needTable.insertRow();
+row.insertCell(0).innerHTML="P"+i;
+
+for(let j=1;j<=3;j++){
+
+let maxValue=document.getElementById("maxTable").rows[i+1].cells[j].children[0].value;
+let allocValue=document.getElementById("allocTable").rows[i+1].cells[j].children[0].value;
+
+if(maxValue=="" || allocValue==""){
+alert("Please fill all Max and Allocation values");
+return;
+}
+
+let max=parseInt(maxValue);
+let alloc=parseInt(allocValue);
+
+if(alloc>max){
+alert("Error: Allocation cannot be greater than Max");
+return;
+}
+
+let need=max-alloc;
+
+row.insertCell(j).innerHTML="<span class='need'>"+need+"</span>";
+
+}
+
+}
+
+}
+
+
+function checkSafe(){
+
+let p=document.getElementById("processes").value;
+
+let a0=document.getElementById("a0").value;
+let a1=document.getElementById("a1").value;
+let a2=document.getElementById("a2").value;
+
+if(a0=="" || a1=="" || a2==""){
+alert("Please enter Available resources");
+return;
+}
+
+let available=[parseInt(a0),parseInt(a1),parseInt(a2)];
+
+let finish=new Array(p).fill(false);
+let seq=[];
+let count=0;
+
+while(count<p){
+
+let found=false;
+
+for(let i=0;i<p;i++){
+
+if(!finish[i]){
+
+let need=[];
+let alloc=[];
+
+for(let j=1;j<=3;j++){
+
+let max=parseInt(document.getElementById("maxTable").rows[i+1].cells[j].children[0].value);
+let al=parseInt(document.getElementById("allocTable").rows[i+1].cells[j].children[0].value);
+
+need.push(max-al);
+alloc.push(al);
+
+}
+
+if(
+need[0]<=available[0] &&
+need[1]<=available[1] &&
+need[2]<=available[2]
+){
+
+available[0]+=alloc[0];
+available[1]+=alloc[1];
+available[2]+=alloc[2];
+
+seq.push("P"+i);
+finish[i]=true;
+found=true;
+count++;
+
+}
+
+}
+
+}
+
+if(!found){
+
+document.getElementById("result").innerHTML="<span class='unsafe'>System is in UNSAFE State</span>";
+return;
+
+}
+
+}
+
+document.getElementById("result").innerHTML="<span class='safe'>SAFE State<br>Sequence: "+seq.join(" → ")+"</span>";
+
+}
+
+
+function resetAll(){
+location.reload();
+}
+
+</script>
+
+</body>
+</html>
